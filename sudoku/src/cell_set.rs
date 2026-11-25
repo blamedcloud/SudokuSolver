@@ -135,6 +135,67 @@ impl CellSet {
     }
 }
 
+
+pub struct CellSetIter {
+    cs: CellSet,
+    last: (Digit, Digit),
+    remaining: u8,
+}
+
+impl CellSetIter {
+
+    fn next_pair(row: Digit, column: Digit) -> (Digit, Digit) {
+        if column == Digit::Nine {
+            (CellSetIter::next_digit(row), Digit::One)
+        } else {
+            (row, CellSetIter::next_digit(column))
+        }
+    }
+
+    fn next_digit(digit: Digit) -> Digit {
+        match digit {
+            Digit::One => Digit::Two,
+            Digit::Two => Digit::Three,
+            Digit::Three => Digit::Four,
+            Digit::Four => Digit::Five,
+            Digit::Five => Digit::Six,
+            Digit::Six => Digit::Seven,
+            Digit::Seven => Digit::Eight,
+            Digit::Eight => Digit::Nine,
+            Digit::Nine => Digit::One,
+        }
+    }
+}
+
+impl Iterator for CellSetIter {
+    type Item = (Digit, Digit);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining == 0 {
+            None
+        } else {
+            while !self.cs.contains(self.last.0, self.last.1) {
+                self.last = CellSetIter::next_pair(self.last.0, self.last.1);
+            }
+            let next = self.last;
+            self.remaining -= 1;
+            self.last = CellSetIter::next_pair(next.0, next.1);
+            Some(next)
+        }
+    }
+}
+
+impl IntoIterator for CellSet {
+    type Item = (Digit, Digit);
+    type IntoIter = CellSetIter;
+    fn into_iter(self) -> Self::IntoIter {
+        CellSetIter {
+            cs: self,
+            last: (Digit::One, Digit::One),
+            remaining: self.size()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::cell_set::{CellSet, COL1_DATA, ROW1_DATA, BOX1_DATA};
@@ -409,5 +470,36 @@ mod tests {
             assert!(boxes.contains(Digit::Nine, Digit::Nine));
         }
 
+    }
+
+    #[test]
+    fn test_iterator() {
+        let mut set1 = CellSet::new();
+
+        set1.insert(Digit::Three, Digit::Eight);
+        set1.insert(Digit::Five, Digit::Five);
+        set1.insert(Digit::One, Digit::Three);
+        set1.insert(Digit::Nine, Digit::Nine);
+
+        let mut iter = set1.into_iter();
+
+        let cell = iter.next();
+        assert!(cell.is_some());
+        assert_eq!(cell.unwrap(), (Digit::One, Digit::Three));
+
+        let cell = iter.next();
+        assert!(cell.is_some());
+        assert_eq!(cell.unwrap(), (Digit::Three, Digit::Eight));
+
+        let cell = iter.next();
+        assert!(cell.is_some());
+        assert_eq!(cell.unwrap(), (Digit::Five, Digit::Five));
+
+        let cell = iter.next();
+        assert!(cell.is_some());
+        assert_eq!(cell.unwrap(), (Digit::Nine, Digit::Nine));
+
+        let cell = iter.next();
+        assert!(cell.is_none());
     }
 }

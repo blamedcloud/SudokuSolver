@@ -28,6 +28,10 @@ impl Digit {
         }
     }
 
+    pub fn iterator() -> impl Iterator<Item = Digit> {
+        [Digit::One, Digit::Two, Digit::Three, Digit::Four, Digit::Five, Digit::Six, Digit::Seven, Digit::Eight, Digit::Nine].iter().copied()
+    }
+
     pub fn get_box_num(row: Digit, column: Digit) -> Self {
         match (row.into(), column.into()) {
             (Entropy::Low, Entropy::Low) => Digit::One,
