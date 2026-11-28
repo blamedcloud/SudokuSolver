@@ -5,6 +5,9 @@ version = 4
 [[package]]
 name = "solver"
 version = "0.1.0"
+dependencies = [
+ "sudoku",
+]
 
 [[package]]
 name = "sudoku"
